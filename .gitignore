@@ -1,0 +1,7 @@
+/vendor/
+/cache/
+/build/
+.env
+.phpunit*cache
+phpinfo.php
+ray.php
