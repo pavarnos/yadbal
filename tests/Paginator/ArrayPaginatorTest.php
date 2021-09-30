@@ -15,14 +15,14 @@ class ArrayPaginatorTest extends TestCase
 {
     public function testFromArrayEmpty(): void
     {
-        $subject = ArrayPaginator::fromArray([], 0);
+        $subject = new ArrayPaginator([], 0);
         self::assertEquals([], $subject->getItemsOnPage());
         self::assertEquals(0, $subject->getPageInformation()->totalItemCount);
     }
 
     public function testFromArray(): void
     {
-        $subject = ArrayPaginator::fromArray($items = [1, 2, 3, 4, 5, 6], 1, 4);
+        $subject = new ArrayPaginator($items = [1, 2, 3, 4, 5, 6], 1, 4);
         self::assertEquals([1, 2, 3, 4], $subject->getItemsOnPage());
         self::assertEquals(count($items), $subject->getPageInformation()->totalItemCount);
     }

@@ -16,7 +16,9 @@ namespace LSS\YADbal\Paginator;
  */
 abstract class AbstractPaginator
 {
-    protected PageInformation $pages;
+    public function __construct(protected PageInformation $pages)
+    {
+    }
 
     abstract public function getItemsOnPage(): array;
 

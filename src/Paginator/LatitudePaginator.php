@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace LSS\YADbal\Paginator;
 
 use Latitude\QueryBuilder\Query\SelectQuery;
-
 use LSS\YADbal\AbstractRepository;
 
 use function Latitude\QueryBuilder\alias;
@@ -24,31 +23,28 @@ class LatitudePaginator extends AbstractPaginator
 {
     public const PAGINATOR_ROW_COUNT_COLUMN = 'paginator_row_count';
 
-    /** @var array the current page of data */
-    private array $rows = [];
+    /**
+     * @param PageInformation $pages
+     * @param array           $rows the current page of data from the database
+     */
+    public function __construct(PageInformation $pages, private array $rows)
+    {
+        parent::__construct($pages);
+    }
 
     public static function forShowAll(array $rows): self
     {
-        $result        = new self();
-        $result->rows  = $rows;
-        $result->pages = PageInformation::showAllItems(count($rows));
-        return $result;
+        return new self(PageInformation::showAllItems(count($rows)), $rows);
     }
 
     public static function forFastMode(array $rows, int $currentPageNumber, int $pageSize): self
     {
-        $result        = new self();
-        $result->rows  = $rows;
-        $result->pages = PageInformation::forFastMode($currentPageNumber, count($rows), $pageSize);
-        return $result;
+        return new self(PageInformation::forFastMode($currentPageNumber, count($rows), $pageSize), $rows);
     }
 
     public static function forPage(array $rows, int $currentPageNumber, int $pageSize, int $totalItemCount): self
     {
-        $result        = new self();
-        $result->rows  = $rows;
-        $result->pages = PageInformation::forPage($currentPageNumber, $totalItemCount, $pageSize);
-        return $result;
+        return new self(PageInformation::forPage($currentPageNumber, $totalItemCount, $pageSize), $rows);
     }
 
     public static function getPageSelect(SelectQuery $select, int $pageNumber, int $pageSize): SelectQuery
@@ -87,7 +83,6 @@ class LatitudePaginator extends AbstractPaginator
 
     public function getItemsOnPage(): array
     {
-        // returns the same data set for every page because we have already calculated for the page the user wanted
         return $this->rows;
     }
 }

@@ -10,26 +10,21 @@ declare(strict_types=1);
 namespace LSS\YADbal\Paginator;
 
 /**
- * Paginate an array
+ * Paginate an array. Pass in the full data set as $items. The paginator will return slices
  */
 class ArrayPaginator extends AbstractPaginator
 {
-    /** @var array the items to paginate: the full data set */
-    private array $items = [];
-
-    private function __construct()
-    {
-    }
-
-    public static function fromArray(
-        array $items,
+    /**
+     * @param array $items the items to paginate: the full data set
+     * @param int   $currentPageNumber
+     * @param int   $itemsPerPage
+     */
+    public function __construct(
+        private array $items,
         int $currentPageNumber,
         int $itemsPerPage = PageInformation::DEFAULT_ITEMS_PER_PAGE
-    ): self {
-        $result        = new self();
-        $result->items = $items;
-        $result->pages = PageInformation::forPage($currentPageNumber, count($items), $itemsPerPage);
-        return $result;
+    ) {
+        parent::__construct(PageInformation::forPage($currentPageNumber, count($items), $itemsPerPage));
     }
 
     public function getItemsOnPage(): array
