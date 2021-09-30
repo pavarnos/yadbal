@@ -98,6 +98,6 @@ class ColumnTest extends TestCase
         self::assertEquals('foo float not null default 0', (new FloatColumn('foo', ''))->toSQLite());
         self::assertEquals('foo integer not null default 0', (new IntegerColumn('foo', ''))->toSQLite());
         self::assertEquals('', (new PrimaryIndex('foo'))->toSQLite());
-        self::assertEquals('KEY foo (foo)', (new SecondaryIndex('foo', ''))->toSQLite());
+        self::assertEquals('', (new SecondaryIndex('foo', ''))->toSQLite());
     }
 }

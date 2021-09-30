@@ -19,9 +19,4 @@ class PrimaryIndex extends Index
     {
         parent::__construct('', $column);
     }
-
-    public function toSQLite(): string
-    {
-        return '';
-    }
 }

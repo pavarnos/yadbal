@@ -33,11 +33,6 @@ abstract class AbstractChildRepository extends AbstractRepository
         $this->parentIdField   = $this->parentTableName . '_id';
     }
 
-    public function getParentIdField(): string
-    {
-        return $this->parentIdField;
-    }
-
     /**
      * @param int   $recordId primary key
      * @param int   $parentId parent key interlock
@@ -79,11 +74,15 @@ abstract class AbstractChildRepository extends AbstractRepository
     public function deleteChildRow(int $recordId, int $parentId): int
     {
         if (empty($recordId)) {
-            throw new DatabaseException(static::TABLE_NAME . ' record not specified', $recordId);
+            return 0;
         }
-        $query    = $this->delete(static::TABLE_NAME)
-                         ->andWhere(field('id')->eq($recordId))
-                         ->andWhere(field($this->parentIdField)->eq($parentId));
+        $query = $this->delete(static::TABLE_NAME)
+                      ->andWhere(field('id')->eq($recordId));
+        if ($parentId === 0) {
+            $query->andWhere(field($this->parentIdField)->isNull());
+        } else {
+            $query->andWhere(field($this->parentIdField)->eq($parentId));
+        }
         $compiled = $query->compile();
         return $this->database->write($compiled->sql(), $compiled->params());
     }
@@ -92,7 +91,6 @@ abstract class AbstractChildRepository extends AbstractRepository
     {
         // interlock so we can only update a row where the child id matches the parent id
         $data = $this->beforeSave($data);
-        assert(isset($data[$this->parentIdField]), 'missing ' . $this->parentIdField);
         $parentId = $data[$this->parentIdField];
         unset($data['id'], $data[$this->parentIdField]);
         $update   = $this->update(static::TABLE_NAME, $data)
@@ -103,9 +101,11 @@ abstract class AbstractChildRepository extends AbstractRepository
         return $id;
     }
 
-    protected function insertRow(array $data): int
+    protected function beforeSave(array $data): array
     {
-        assert(isset($data[$this->parentIdField]), 'missing ' . $this->parentIdField);
-        return parent::insertRow($data);
+        if (!isset($data[$this->parentIdField])) {
+            throw new DatabaseException('missing ' . $this->parentIdField . ' in ' . static::TABLE_NAME);
+        }
+        return parent::beforeSave($data);
     }
 }

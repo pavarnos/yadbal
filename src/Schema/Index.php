@@ -46,7 +46,7 @@ abstract class Index
 
     public function toSQLite(): string
     {
-        return $this->toMySQL();
+        return '';
     }
 
     /**
