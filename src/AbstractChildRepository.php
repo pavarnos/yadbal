@@ -57,7 +57,7 @@ abstract class AbstractChildRepository extends AbstractRepository
         if (!empty($columns)) {
             $query->columns(...$columns);
         }
-        return $this->fetchRow($query) ?: null;
+        return $this->afterFind($this->fetchRow($query) ?: null);
     }
 
     /**

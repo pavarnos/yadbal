@@ -33,4 +33,6 @@ interface SQLQueryFactoryInterface
     public function update(string $tableName, array $map = []): UpdateQuery;
 
     public function delete(string $tableName): DeleteQuery;
+
+    public function now(): ExpressionInterface;
 }

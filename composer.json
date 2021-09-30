@@ -25,7 +25,8 @@
         "phpunit/phpunit": "^9.1",
         "phpstan/phpstan": "^0.12",
         "phpstan/phpstan-phpunit": "^0.12",
-        "phpstan/phpstan-strict-rules": "^0.12"
+        "phpstan/phpstan-strict-rules": "^0.12",
+        "nesbot/carbon": "^2.53"
     },
     "autoload": {
         "psr-4": {

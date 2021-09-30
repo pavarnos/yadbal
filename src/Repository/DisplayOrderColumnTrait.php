@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace LSS\YADbal\Repository;
 
-trait DisplayOrderTrait
+trait DisplayOrderColumnTrait
 {
     public function moveUp(int $id): void
     {

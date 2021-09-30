@@ -11,7 +11,7 @@ namespace LSS\YADbal\Repository;
 
 use Latitude\QueryBuilder\ExpressionInterface;
 
-trait DateCreatedFieldTrait
+trait DateCreatedColumnTrait
 {
     protected function beforeSaveDateCreated(array $data): array
     {

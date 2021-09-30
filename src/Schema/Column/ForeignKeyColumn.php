@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace LSS\YADbal\Schema\Column;
 
-use LSS\YADbal\Schema\SchemaException;
-
 class ForeignKeyColumn extends IntegerColumn
 {
     public const RELATED_TEXT = 'The related';
@@ -27,13 +25,12 @@ class ForeignKeyColumn extends IntegerColumn
         private string $onDelete = self::ACTION_NO_ACTION,
         private string $onUpdate = self::ACTION_NO_ACTION,
         private string $constraintName = '' // blank = automatic
-    ) {
+    )
+    {
         if (empty($this->otherTable)) {
-            if (\Safe\preg_match('|^' . self::RELATED_TEXT . '\s+([-A-Za-z_]+)|', $description, $matches) > 0) {
-                $this->otherTable = $matches[1];
-            } else {
-                throw new SchemaException('Cannot determine the related table');
-            }
+            $didMatch = \Safe\preg_match('|^' . self::RELATED_TEXT . '\s+([-A-Za-z_]+)|', $description, $matches) > 0;
+            assert($didMatch, 'cannot determine related table');
+            $this->otherTable = $matches[1];
         }
         if (empty($description)) {
             $description = self::RELATED_TEXT . ' ' . $otherTable;

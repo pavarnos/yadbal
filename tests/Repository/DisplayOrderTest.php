@@ -7,8 +7,9 @@
 
 declare(strict_types=1);
 
-namespace LSS\YADbal;
+namespace LSS\YADbal\Repository;
 
+use LSS\YADbal\MemoryDatabaseConnection;
 use PHPUnit\Framework\TestCase;
 
 class DisplayOrderTest extends TestCase

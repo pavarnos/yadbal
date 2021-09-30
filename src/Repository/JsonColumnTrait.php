@@ -19,12 +19,23 @@ trait JsonColumnTrait
      * @param array $data
      * @return array
      */
-    protected function beforeSaveJsonColumns(array $data,): array
+    protected function beforeSaveJsonColumns(array $data): array
     {
         assert(!empty($this->jsonColumns), 'set jsonColumns in the constructor');
         foreach ($this->jsonColumns as $column) {
             if (isset($data[$column]) && is_array($data[$column])) {
                 $data[$column] = \Safe\json_encode($data[$column]);
+            }
+        }
+        return $data;
+    }
+
+    protected function afterFindJsonColumns(array $data): array
+    {
+        assert(!empty($this->jsonColumns), 'set jsonColumns in the constructor');
+        foreach ($this->jsonColumns as $column) {
+            if (!empty($data[$column])) {
+                $data[$column] = \Safe\json_decode($data[$column], true);
             }
         }
         return $data;

@@ -19,10 +19,6 @@ use function Latitude\QueryBuilder\func;
 
 /**
  * Paginate a Latitude SqlQuery
- *
- * Its a bit awkward because ReactPHP uses promises, so when we ask for the data we get it back at some later point
- * which won't work for rendering the report to html. So we get the row count and data up front (2 separate sql queries)
- * and store it here in this data transfer object to make things easier.
  */
 class LatitudePaginator extends AbstractPaginator
 {

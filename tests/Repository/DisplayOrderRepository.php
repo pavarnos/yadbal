@@ -7,21 +7,20 @@
 
 declare(strict_types=1);
 
-namespace LSS\YADbal;
+namespace LSS\YADbal\Repository;
 
-use LSS\YADbal\Repository\DisplayOrder;
-use LSS\YADbal\Repository\DisplayOrderTrait;
+use LSS\YADbal\AbstractRepository;
 use LSS\YADbal\Schema\Column\ForeignKeyColumn;
 use LSS\YADbal\Schema\Table;
 use LSS\YADbal\Schema\TableBuilder;
 
 /**
  * wanted to use an anonymous class byt there was no syntax that allowed us to specify the correct return type
- * that both phstan and phpstorm would accept
+ * that both phpstan and phpstorm would accept
  */
 class DisplayOrderRepository extends AbstractRepository
 {
-    use DisplayOrderTrait;
+    use DisplayOrderColumnTrait;
 
     public const TABLE_NAME = DisplayOrderTest::TABLE_NAME;
 

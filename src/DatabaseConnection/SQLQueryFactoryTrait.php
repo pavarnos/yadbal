@@ -17,6 +17,8 @@ use Latitude\QueryBuilder\Query\SelectQuery;
 use Latitude\QueryBuilder\Query\UpdateQuery;
 use Latitude\QueryBuilder\QueryFactory;
 
+use function Latitude\QueryBuilder\express;
+
 /**
  * supports DatabaseConnectionInterface
  */
@@ -55,6 +57,11 @@ trait SQLQueryFactoryTrait
     public function delete(string $tableName): DeleteQuery
     {
         return $this->queryFactory->delete($tableName);
+    }
+
+    public function now(): ExpressionInterface
+    {
+        return express('now()');
     }
 
     private function setupQueryFactory(): void

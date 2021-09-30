@@ -17,7 +17,6 @@ use Latitude\QueryBuilder\Query\SelectQuery;
 use Latitude\QueryBuilder\Query\UpdateQuery;
 use LSS\YADbal\Schema\GetSchemaInterface;
 
-use function Latitude\QueryBuilder\express;
 use function Latitude\QueryBuilder\field;
 
 /**
@@ -47,7 +46,7 @@ abstract class AbstractRepository implements GetSchemaInterface
 
     public function now(): ExpressionInterface
     {
-        return express('now()');
+        return $this->database->now();
     }
 
     /**
@@ -67,7 +66,7 @@ abstract class AbstractRepository implements GetSchemaInterface
         if (!empty($columns)) {
             $query->columns(...$columns);
         }
-        return $this->fetchRow($query) ?: null;
+        return $this->afterFind($this->fetchRow($query) ?: null);
     }
 
     /**
@@ -103,26 +102,14 @@ abstract class AbstractRepository implements GetSchemaInterface
     public function deleteRow(int $recordId): int
     {
         if (empty($recordId)) {
-            throw new DatabaseException(static::TABLE_NAME . ' Record not specified', $recordId, static::TABLE_NAME);
+            throw new DatabaseException(static::TABLE_NAME . ' Record not specified');
         }
-        $query    = $this->delete(static::TABLE_NAME)->andWhere(field('id')->eq($recordId));
-        $compiled = $query->compile();
-        return $this->database->write($compiled->sql(), $compiled->params());
-    }
-
-    public function fetchAll(SelectQuery $select): array
-    {
-        $compiled = $select->compile();
-        return $this->database->fetchAll($compiled->sql(), $compiled->params());
-    }
-
-    public function fetchInt(SelectQuery $select): int
-    {
-        $compiled = $select->compile();
-        return $this->database->fetchInt($compiled->sql(), $compiled->params());
+        $query = $this->delete(static::TABLE_NAME)->andWhere(field('id')->eq($recordId));
+        return $this->writeAndCount($query);
     }
 
     /**
+     * convenience / shortcut for when you need to build queries
      * @param string|ExpressionInterface ...$columns
      * @return SelectQuery
      */
@@ -131,10 +118,43 @@ abstract class AbstractRepository implements GetSchemaInterface
         return $this->select(...$columns)->from(static::TABLE_NAME);
     }
 
+//    public function getShowAllPaginator(SelectQuery $select): AbstractPaginator
+//    {
+//        return LatitudePaginator::forShowAll($this->fetchAll($select));
+//    }
+//
+//    public function getFastPaginator(SelectQuery $select, int $pageNumber, int $pageSize): AbstractPaginator
+//    {
+//        $rows = $this->fetchAll(LatitudePaginator::getPageSelect($select, $pageNumber, $pageSize));
+//        return LatitudePaginator::forFastMode($rows, $pageNumber, $pageSize);
+//    }
+//
+//    public function getPaginator(SelectQuery $select, int $pageNumber, int $pageSize): AbstractPaginator
+//    {
+//        $itemCount = $this->fetchInt(LatitudePaginator::getCountSelect($select, $this));
+//        $rows      = $this->fetchAll(LatitudePaginator::getPageSelect($select, $pageNumber, $pageSize));
+//        return LatitudePaginator::forPage($rows, $pageNumber, $pageSize, $itemCount);
+//    }
+//
+
+    // it would be nice to make all fetch*() methods protected, but they are needed for DisplayOrder and pagination.
+    // the gymnastics involved in hiding them was not worth it
     public function fetchPairs(SelectQuery $select): array
     {
         $compiled = $select->compile();
         return $this->database->fetchPairs($compiled->sql(), $compiled->params());
+    }
+
+    public function fetchInt(SelectQuery $select): int
+    {
+        $compiled = $select->compile();
+        return $this->database->fetchInt($compiled->sql(), $compiled->params());
+    }
+
+    public function fetchAll(SelectQuery $select): array
+    {
+        $compiled = $select->compile();
+        return $this->database->fetchAll($compiled->sql(), $compiled->params());
     }
 
     protected function fetchRow(SelectQuery $select): array
@@ -158,14 +178,15 @@ abstract class AbstractRepository implements GetSchemaInterface
         return $output;
     }
 
+    // low level utility methods
+
     protected function updateRow(int $id, array $data): int
     {
         $data = $this->beforeSave($data);
         unset($data['id']);
-        $update   = $this->update(static::TABLE_NAME, $data)
-                         ->andWhere(field('id')->eq($id));
-        $compiled = $update->compile();
-        $this->database->write($compiled->sql(), $compiled->params());
+        $update = $this->update(static::TABLE_NAME, $data)
+                       ->andWhere(field('id')->eq($id));
+        $this->write($update);
         return $id;
     }
 
@@ -173,9 +194,8 @@ abstract class AbstractRepository implements GetSchemaInterface
     {
         $data = $this->beforeSave($data);
         unset($data['id']);
-        $insert   = $this->insert(static::TABLE_NAME, $data);
-        $compiled = $insert->compile();
-        $this->database->write($compiled->sql(), $compiled->params());
+        $insert = $this->insert(static::TABLE_NAME, $data);
+        $this->write($insert);
         return $this->database->lastInsertId();
     }
 
@@ -191,10 +211,11 @@ abstract class AbstractRepository implements GetSchemaInterface
         return $this->database->write($compiled->sql(), $compiled->params());
     }
 
+    // row transformations
+
     protected function beforeSave(array $data): array
     {
-        // magically call all beforeSave*() methods on this class.
-        // call order is not guaranteed
+        // magically call all beforeSave*() methods on this class. call order is not guaranteed
         foreach ((new \ReflectionClass($this))->getMethods() as $method) {
             if (!str_starts_with($method->getName(), 'beforeSave') || $method->getName() === 'beforeSave') {
                 // do not recursively call this method! infinite doom!
@@ -205,6 +226,25 @@ abstract class AbstractRepository implements GetSchemaInterface
         }
         return $data;
     }
+
+    protected function afterFind(?array $data): ?array
+    {
+        if (is_null($data)) {
+            return null;
+        }
+        // magically call all afterFind*() methods on this class. call order is not guaranteed
+        foreach ((new \ReflectionClass($this))->getMethods() as $method) {
+            if (!str_starts_with($method->getName(), 'afterFind') || $method->getName() === 'afterFind') {
+                // do not recursively call this method! infinite doom!
+                continue;
+            }
+            $method->setAccessible(true);
+            $data = (array)$method->invoke($this, $data);
+        }
+        return $data;
+    }
+
+    // query building tools
 
     /**
      * @param string|ExpressionInterface ...$columns
@@ -228,14 +268,5 @@ abstract class AbstractRepository implements GetSchemaInterface
     protected function delete(string $tableName): DeleteQuery
     {
         return $this->database->delete($tableName);
-    }
-
-    /**
-     * use this for weird queries that latitude cannot handle like TRUNCATE or DDL stuff
-     * @return DatabaseConnectionInterface
-     */
-    protected function getDatabaseConnection(): DatabaseConnectionInterface
-    {
-        return $this->database;
     }
 }
