@@ -2,19 +2,51 @@
 
 A simple wrapper around PDO that provides
 
-- utility functions to make database queries easier
+- utility functions to make database queries easier with less boilerplate 
 - tools to declare your database schema in code and sync those with the server
-- utilities to make common fields like display order, date created / updated easier
-- fakes and stubs to ease tests and keep them away from talking to a physical database
+- utilities to make common fields like display order, date created / updated, json easier to work with
+- a lightweight paginator
+- fakes and stubs to ease tests so they don't have to talk to a physical database
 
-It is currently MySQL only, with initial support for SQLite. Pull requests welcome to extend this to other DBMS.
+It is currently MySQL only, with some support for SQLite to help with unit tests. Pull requests welcome to extend
+this to other DBMS.
 
 ## Why another one?
+
+This is based on an ancient library i wrote in 2007 to allow a database schema definition all in PHP and (at the click
+of a button) generate alter table statements to synch the mysql server with the PHP. This was handy for a number of
+sites that had a very limited number of users. It allowed
+
+- a build process to update the schema on demand.
+- custom reports to introspect the schema and generate a reasonably rich description of the tables and fields. Users
+  could pick which a table to start with and the report writer knows what tables can join with it because of the foreign
+  key relationships.
+- a database diagram to be generated with graphviz
+- and automated schema documentation, both supporting the report builder.
+- cross checking of foreign key relationships so we could do different kinds of data integrity checks
+  (without relying on the DBMS to maintain referential integrity, which didn't make sense in all cases)
+- checking that dependant models are correctly wired up to handle onChange and onDelete events when data in the parent
+  model changes. (This is done in a pre-release build step). You can use foreign key constraints in most cases, but not
+  all
+
+Yeah, there is better ways to do this now with full ORMs and other goodness. But this is 
+
+- battle tested over many years
+- is as lightweight as possible
+- tries hard to minimise the amount of boilerplate code needed to use it
+- has high test coverage 
+- phpstan --level=max
+- PHP8.0 with strict types
+
+And I still use it in a few places and for new greenfield projects.
 
 ## Repository per table
 
 Easiest way to use this is to declare one class per table in your database, and add utility functions to isolate your
 code from queries in the database.
+
+Use the `TableBuilder` convenience methods to declare your schema, or just create new columns and add them to
+the `Schema` as needed.
 
 ```php
 class CompanyRepository extends AbstractRepository
@@ -67,6 +99,8 @@ Use a ChildRepository for dependent tables
 ```php
 class ChildRepository extends AbstractChildRepository
 {
+    use DateCreatedColumnTrait;
+    
     public const MAX_DAYS_OLD = 28;
     
     public const TABLE_NAME = 'company_job';
@@ -105,6 +139,7 @@ class ChildRepository extends AbstractChildRepository
         if (empty($data['date_expires'])) {
             $data['date_expires'] = Carbon::now()->addDays(self::MAX_DAYS_OLD)->toDateString();
         }
+        // date_created is automatically calculated
         return parent::beforeSave($data);
     }
 
@@ -117,14 +152,100 @@ class ChildRepository extends AbstractChildRepository
 ```
 
 The ChildRepository has some tools to prevent insecure direct object references, so you can only access the child record
-if you know the parent id too.
+if you know the parent id too. eg
+
+- `findChildOrNull($id, $parentId)`
+- `findChildOrException($id, $parentId)`
+- on new row, `save()` throws an exception if parent id is not set 
+- on save existing row, `save()` will only update if the id matches the parent id  
 
 ```php
     $job = $jobRepository->findChildOrException($jobId, $companyId);
 ```
 
-Similarly, for saving records you must supply the correct parent id to update, or a non zero parent id to create a new
-row
+## Schema Syncing
+
+The above code snippets have examples of declaring your schema for each table.
+
+Create a class that asks all your Repositories for their schema via `getSchema()`
+
+```php
+/**
+ * Get the database schema: a set of tables that are in the database.
+ * Note this is the ideal / declared schema from the code.
+ * After changing the software, it may need to be upgraded using SchemaUpgrade
+ */
+class SchemaFromDeclarations
+{
+    public const REPOSITORY_PATH = '/path/to/repositories';
+    
+    private SchemaInterface $schema;
+    
+    public function __construct(private ContainerInterface $container) 
+    {
+    }    
+
+    public function build(): SchemaInterface
+    {
+        if (!empty($this->schema)) {
+            return $this->schema;
+        }
+        $this->schema = new Schema();
+        $finder = new Symfony\Finder();
+        $finder->in(self::REPOSITORY_PATH)->name('*Repository.php')->sortByName()->notName('Abstract*.php');
+        foreach ($finder as $fileInfo) {
+            $className = $this->fileNameToClassName($fileInfo->getRealPath() ?: '');
+            $repository = $this->container->get($className);
+            assert($repository instanceof AbstractRepository);
+            $this->schema->addTable($repository->getSchema());
+        }
+        return $this->schema;
+    }
+    
+    private function fileNameToClassName(string $fileName): string
+    {
+        // ...
+    }
+}
+```
+
+And then a something that can do the upgrading for you
+
+```php
+class DatabaseUpgradeCommand 
+{
+    public function __construct(
+        private SchemaFromDeclarations $wanted,
+        private SchemaFromMySQL $actual,
+        private DatabaseConnectionInterface $database
+    ) {
+    }
+
+    public function doUpgrade(): void
+    {
+        $wanted  = $this->wanted->build();
+        $upgrade = (new SchemaUpgradeCalculator())->getUpgradeSQL($wanted, $this->actual->build());
+        $this->database->transaction(
+            function () use ($upgrade): void {
+                foreach ($upgrade as $query) {
+                    $this->database->execute($query);
+                }
+            }
+        );
+    }
+}
+```
+
+I usually create a symfony console command that dumps the upgrade statements unless a --apply option is passed.
+
+### known limitations
+
+- does not handle the meta stuff at the end of the table eg type, encoding etc
+- works better with a single integer primary key index field first in the table
+- the sync / comparator can cope with one or more columns added / deleted renamed but gets easily confused if you do a
+  lot of big changes at once. Having unique comments on each field helps it resync itself. You can change one of (column
+  name, data type, comment) for the field to be altered. Change two and it will think it is a new field, deleting the
+  old one and adding a new one
 
 ## Test Utilities
 
