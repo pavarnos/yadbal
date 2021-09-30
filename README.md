@@ -1,4 +1,4 @@
-# Yet Another Database Abstraction Layer
+## Yet Another Database Abstraction Layer
 
 A simple wrapper around PDO that provides
 
@@ -52,7 +52,7 @@ class CompanyRepository extends AbstractRepository
     }
 
     /**
-     * @return array<int,string>
+     * @return string[]
      */
     public function getList(): array
     {
@@ -62,13 +62,75 @@ class CompanyRepository extends AbstractRepository
 }
 ```
 
+Use a ChildRepository for dependent tables
+
+```php
+class ChildRepository extends AbstractChildRepository
+{
+    public const MAX_DAYS_OLD = 28;
+    
+    public const TABLE_NAME = 'company_job';
+
+    public function getSchema(): Table
+    {
+        return (new TableBuilder(self::TABLE_NAME, ''))
+            ->addPrimaryKeyColumn()
+            ->addForeignKeyColumn(CompanyRepository::TABLE_NAME, '', '', ForeignKeyColumn::ACTION_CASCADE)
+            ->addStringColumn('title', FieldLength::PAGE_TITLE, 'title of job')
+            ->addTextColumn('content', 'description of job in plain text')
+            ->addStringColumn('web_site', FieldLength::WEBSITE, 'where to apply')
+            ->addDateColumn('date_expires', 'show the job until this date')
+            ->addDateCreatedColumn()
+            ->addStandardIndex('date_expires')
+            ->build();
+    }
+
+    public function getVisibleFor(int $companyId): array
+    {
+        $select = $this->getSelect();
+        $select->andWhere(field('company_id')->eq($companyId));
+        $this->whereIsNotExpired($select);
+        return $this->fetchAll($select);
+    }
+
+    public function getAllFor(int $companyId): array
+    {
+        $select = $this->getSelect();
+        $select->andWhere(field('company_id')->eq($companyId));
+        return $this->fetchAll($select);
+    }
+    
+    protected function beforeSave(array $data): array
+    {
+        if (empty($data['date_expires'])) {
+            $data['date_expires'] = Carbon::now()->addDays(self::MAX_DAYS_OLD)->toDateString();
+        }
+        return parent::beforeSave($data);
+    }
+
+    private function whereIsNotExpired(SelectQuery $select): SelectQuery
+    {
+        $select->andWhere(field(static::TABLE_NAME . '.date_expires')->gte($this->now()));
+        return $select;
+    }
+}
+```
+
+The ChildRepository has some tools to prevent insecure direct object references, so you can only access the child record
+if you know the parent id too.
+
+```php
+    $job = $jobRepository->findChildOrException($jobId, $companyId);
+```
+
+Similarly, for saving records you must supply the correct parent id to update, or a non zero parent id to create a new
+row
+
 ## Test Utilities
 
 Use a `FakeDatabaseConnection` to check that expected SQL queries and parameters are passed through to the database.
 This can still allow room for bugs because it does not check that your declared schema matches the queries.
 
 Use a `MemoryDatabaseConnection`. Build the tables first with `$repository->getSchema()->toSQLite()` then populate with
-fake data to allow true end to end tests. See `DisplayOrderTest` for an example.
+fake data to allow true end-to-end tests. See `DisplayOrderTest` for an example.
 
-```php
-```

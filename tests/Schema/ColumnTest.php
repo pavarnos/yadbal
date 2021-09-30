@@ -9,7 +9,16 @@ declare(strict_types=1);
 
 namespace LSS\YADbal\Schema;
 
+use LSS\YADbal\Schema\Column\DateColumn;
+use LSS\YADbal\Schema\Column\DateTimeColumn;
+use LSS\YADbal\Schema\Column\EnumerationColumn;
+use LSS\YADbal\Schema\Column\FloatColumn;
 use LSS\YADbal\Schema\Column\ForeignKeyColumn;
+use LSS\YADbal\Schema\Column\IntegerColumn;
+use LSS\YADbal\Schema\Column\SetColumn;
+use LSS\YADbal\Schema\Column\StringColumn;
+use LSS\YADbal\Schema\Index\PrimaryIndex;
+use LSS\YADbal\Schema\Index\SecondaryIndex;
 use PHPUnit\Framework\TestCase;
 
 class ColumnTest extends TestCase
@@ -73,5 +82,22 @@ class ColumnTest extends TestCase
         self::assertStringContainsString('REFERENCES ' . $otherTable . ' (id)', $subject->toMySQLForeignKey());
         self::assertStringContainsString('ON DELETE ' . $delete, $subject->toMySQLForeignKey());
         self::assertStringContainsString('ON UPDATE ' . $update, $subject->toMySQLForeignKey());
+    }
+
+    public function testNullDefault(): void
+    {
+        self::assertStringNotContainsString('DEFAULT', (new DateColumn('foo', ''))->setDefault(null)->toMySQL());
+        self::assertStringNotContainsString('DEFAULT', (new DateTimeColumn('foo', ''))->setDefault(null)->toMySQL());
+    }
+
+    public function testSQLiteGeneration(): void
+    {
+        self::assertEquals('foo text default "bar"', (new EnumerationColumn('foo', '', ['bar', 'baz']))->toSQLite());
+        self::assertEquals('foo text default ""', (new SetColumn('foo', '', ['bar', 'baz']))->toSQLite());
+        self::assertEquals('foo varchar(20) not null default ""', (new StringColumn('foo', '', '', 20))->toSQLite());
+        self::assertEquals('foo float not null default 0', (new FloatColumn('foo', ''))->toSQLite());
+        self::assertEquals('foo integer not null default 0', (new IntegerColumn('foo', ''))->toSQLite());
+        self::assertEquals('', (new PrimaryIndex('foo'))->toSQLite());
+        self::assertEquals('KEY foo (foo)', (new SecondaryIndex('foo', ''))->toSQLite());
     }
 }

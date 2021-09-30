@@ -9,10 +9,9 @@ declare(strict_types=1);
 
 namespace LSS\YADbal;
 
+use Latitude\QueryBuilder\Engine\MySqlEngine;
 use LSS\YADbal\DatabaseConnection\PDOConnection;
 use PHPUnit\Framework\TestCase;
-
-use function Latitude\QueryBuilder\field;
 
 /**
  * Also tests down through to PDOConnection
@@ -161,6 +160,12 @@ class DatabaseConnectionTest extends TestCase
         $database = new DatabaseConnection($read, $write);
         self::assertEquals($affectedRows, $database->write($writeSQL, $writeParams));
         self::assertEquals($expectedString, $database->fetchString($readSQL, $readParams));
+    }
+
+    public function testMySQLNow(): void
+    {
+        $subject = new DatabaseConnection(new PDOConnection('sqlite:memory:'));
+        self::assertStringContainsString('now()', $subject->now()->sql(new MySqlEngine()));
     }
 
     private function createDatabase(): DatabaseConnectionInterface

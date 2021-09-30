@@ -324,25 +324,127 @@ class PageInformationTest extends TestCase
 
     public function testFastModeEmpty(): void
     {
-
+        $pages = PageInformation::forPage(1, 0, self::ITEMS_PER_PAGE, self::PAGES_TO_SHOW);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->itemsPerPage);
+        self::assertEquals(self::PAGES_TO_SHOW, $pages->maxPagesToShow);
+        self::assertEquals(0, $pages->totalItemCount);
+        self::assertEquals(0, $pages->currentItemCount);
+        self::assertEquals(0, $pages->pageCount);
+        self::assertEquals(1, $pages->firstPage);
+        self::assertEquals(1, $pages->firstPageInRange);
+        self::assertEquals(1, $pages->lastPage);
+        self::assertEquals(1, $pages->lastPageInRange);
+        self::assertEquals(1, $pages->currentPage);
+        self::assertEquals(null, $pages->previousPage);
+        self::assertEquals(null, $pages->nextPage);
+        self::assertEquals([], $pages->pageNumbers);
+        self::assertEquals(0, $pages->firstItemNumber);
+        self::assertEquals(0, $pages->lastItemNumber);
     }
+
     public function testFastModeOneItem(): void
     {
-
+        $pages = PageInformation::forFastMode(1, 1, self::ITEMS_PER_PAGE, self::PAGES_TO_SHOW);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->itemsPerPage);
+        self::assertEquals(self::PAGES_TO_SHOW, $pages->maxPagesToShow);
+        self::assertEquals(1, $pages->totalItemCount);
+        self::assertEquals(1, $pages->currentItemCount);
+        self::assertEquals(1, $pages->pageCount);
+        self::assertEquals(1, $pages->firstPage);
+        self::assertEquals(1, $pages->firstPageInRange);
+        self::assertEquals(1, $pages->lastPage);
+        self::assertEquals(1, $pages->lastPageInRange);
+        self::assertEquals(1, $pages->currentPage);
+        self::assertEquals(null, $pages->previousPage);
+        self::assertEquals(null, $pages->nextPage);
+        self::assertEquals([1], $pages->pageNumbers);
+        self::assertEquals(0, $pages->firstItemNumber);
+        self::assertEquals(0, $pages->lastItemNumber);
     }
 
     public function testFastModeOnePageFull(): void
     {
-
+        // page 1 is full. we have exactly one page worth of items
+        // we have to allow nav to the next page in case there are more items: fast mode cannot tell
+        $pages = PageInformation::forFastMode(1, self::ITEMS_PER_PAGE, self::ITEMS_PER_PAGE, self::PAGES_TO_SHOW);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->itemsPerPage);
+        self::assertEquals(self::PAGES_TO_SHOW, $pages->maxPagesToShow);
+        self::assertEquals(self::ITEMS_PER_PAGE + 1, $pages->totalItemCount); // guess by fast mode: maybe another page?
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->currentItemCount);
+        self::assertEquals(2, $pages->pageCount);
+        self::assertEquals(1, $pages->firstPage);
+        self::assertEquals(1, $pages->firstPageInRange);
+        self::assertEquals(2, $pages->lastPage);
+        self::assertEquals(2, $pages->lastPageInRange);
+        self::assertEquals(1, $pages->currentPage);
+        self::assertEquals(null, $pages->previousPage);
+        self::assertEquals(2, $pages->nextPage);
+        self::assertEquals([1, 2], $pages->pageNumbers);
+        self::assertEquals(0, $pages->firstItemNumber);
+        self::assertEquals(self::ITEMS_PER_PAGE - 1, $pages->lastItemNumber); // zero based
     }
 
-    public function testFastModeOnePagePlusOne(): void
+    public function testFastModeOnePageFullTrySecondPage(): void
     {
+        // page 1 is full, so we are trying the second page, but it reverts us back to the first page because there
+        // is no data on page 2: we exactly fill one page only. Cannot see a Next Page
+        $pages = PageInformation::forFastMode(2, 0, self::ITEMS_PER_PAGE, self::PAGES_TO_SHOW);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->itemsPerPage);
+        self::assertEquals(self::PAGES_TO_SHOW, $pages->maxPagesToShow);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->totalItemCount); // definitely no more pages
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->currentItemCount);
+        self::assertEquals(1, $pages->pageCount);
+        self::assertEquals(1, $pages->firstPage);
+        self::assertEquals(1, $pages->firstPageInRange);
+        self::assertEquals(1, $pages->lastPage);
+        self::assertEquals(1, $pages->lastPageInRange);
+        self::assertEquals(1, $pages->currentPage);
+        self::assertEquals(null, $pages->previousPage);
+        self::assertEquals(null, $pages->nextPage);
+        self::assertEquals([1], $pages->pageNumbers);
+        self::assertEquals(0, $pages->firstItemNumber);
+        self::assertEquals(self::ITEMS_PER_PAGE - 1, $pages->lastItemNumber); // zero based
+    }
 
+    public function testFastModeOnePagePlusOneSecondPage(): void
+    {
+        $pages = PageInformation::forFastMode(2, 1, self::ITEMS_PER_PAGE, self::PAGES_TO_SHOW);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->itemsPerPage);
+        self::assertEquals(self::PAGES_TO_SHOW, $pages->maxPagesToShow);
+        self::assertEquals(self::ITEMS_PER_PAGE + 1, $pages->totalItemCount);
+        self::assertEquals(1, $pages->currentItemCount);
+        self::assertEquals(2, $pages->pageCount);
+        self::assertEquals(1, $pages->firstPage);
+        self::assertEquals(1, $pages->firstPageInRange);
+        self::assertEquals(2, $pages->lastPage);
+        self::assertEquals(2, $pages->lastPageInRange);
+        self::assertEquals(2, $pages->currentPage);
+        self::assertEquals(1, $pages->previousPage);
+        self::assertEquals(null, $pages->nextPage);
+        self::assertEquals([1, 2], $pages->pageNumbers);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->firstItemNumber);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->lastItemNumber);
     }
 
     public function testFastModeSecondPage(): void
     {
-
+        $itemCount       = intval(ceil(1.5 * self::ITEMS_PER_PAGE));
+        $itemsOnThisPage = $itemCount - self::ITEMS_PER_PAGE;
+        $pages           = PageInformation::forFastMode(2, $itemsOnThisPage, self::ITEMS_PER_PAGE, self::PAGES_TO_SHOW);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->itemsPerPage);
+        self::assertEquals(self::PAGES_TO_SHOW, $pages->maxPagesToShow);
+        self::assertEquals($itemCount, $pages->totalItemCount);
+        self::assertEquals($itemsOnThisPage, $pages->currentItemCount);
+        self::assertEquals(2, $pages->pageCount);
+        self::assertEquals(1, $pages->firstPage);
+        self::assertEquals(1, $pages->firstPageInRange);
+        self::assertEquals(2, $pages->lastPage);
+        self::assertEquals(2, $pages->lastPageInRange);
+        self::assertEquals(2, $pages->currentPage);
+        self::assertEquals(1, $pages->previousPage);
+        self::assertEquals(null, $pages->nextPage);
+        self::assertEquals([1, 2], $pages->pageNumbers);
+        self::assertEquals(self::ITEMS_PER_PAGE, $pages->firstItemNumber);
+        self::assertEquals($itemCount - 1, $pages->lastItemNumber);
     }
 }

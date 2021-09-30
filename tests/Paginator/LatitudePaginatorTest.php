@@ -33,6 +33,23 @@ class LatitudePaginatorTest extends TestCase
         self::assertEquals(count($items), $subject->getPageInformation()->totalItemCount);
     }
 
+    public function testForFastModeEmpty(): void
+    {
+        $subject = LatitudePaginator::forFastMode([], $pageNumber = 1, $pageSize = 20);
+        self::assertEquals([], $subject->getItemsOnPage());
+        self::assertEquals(0, $subject->getPageInformation()->totalItemCount);
+        self::assertEquals($pageSize, $subject->getPageInformation()->itemsPerPage);
+        self::assertEquals($pageNumber, $subject->getPageInformation()->currentPage);
+    }
+
+    public function testForFastMode(): void
+    {
+        $subject = LatitudePaginator::forFastMode($items = [1, 2, 3, 4], $pageNumber = 3, $pageSize = 4);
+        self::assertEquals($items, $subject->getItemsOnPage());
+        self::assertEquals($pageSize, $subject->getPageInformation()->itemsPerPage);
+        self::assertEquals($pageNumber, $subject->getPageInformation()->currentPage);
+    }
+
     public function testForPageEmpty(): void
     {
         $subject = LatitudePaginator::forPage([], $pageNumber = 1, $pageSize = 20, 0);

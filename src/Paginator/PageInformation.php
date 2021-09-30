@@ -159,7 +159,8 @@ class PageInformation
     ): self {
         assert($currentPageNumber > 0);
         assert($itemsOnThisPage >= 0);
-        $totalItemCount = $itemsOnThisPage + $itemsPerPage * $currentPageNumber;
+        assert($itemsOnThisPage <= $itemsPerPage);
+        $totalItemCount = $itemsOnThisPage + $itemsPerPage * ($currentPageNumber - 1);
         if ($itemsOnThisPage === 0 && $currentPageNumber > 1) {
             // we guessed there might be more items, but the last page was full and the next is empty, so display the last page again
             $currentPageNumber--;

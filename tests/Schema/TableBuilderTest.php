@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace LSS\YADbal\Schema;
 
 use LSS\YADbal\Schema\Column\DateColumn;
+use LSS\YADbal\Schema\Column\ForeignKeyColumn;
 use LSS\YADbal\Schema\Column\StringColumn;
 use LSS\YADbal\Schema\Index\PrimaryIndex;
 use LSS\YADbal\Schema\Index\SecondaryIndex;
@@ -44,9 +45,14 @@ class TableBuilderTest extends TestCase
     public function testAddForeignKeyColumn(): void
     {
         $table  = (new TableBuilder(self::NAME, self::DESCRIPTION))
-            ->addForeignKeyColumn($otherName = 'other_table', self::COLUMN_DESCRIPTION, $name = 'other_table_id')
+            ->addForeignKeyColumn(
+                $otherName = 'other_table',
+                self::COLUMN_DESCRIPTION,
+                '',
+                $action = ForeignKeyColumn::ACTION_CASCADE
+            )
             ->build();
-        $column = $table->getColumn($name);
+        $column = $table->getColumn($name = $otherName . '_id');
         self::assertInstanceOf(Column\ForeignKeyColumn::class, $column);
         self::assertEquals($otherName, $column->getOtherTable());
         self::assertEquals($name, $column->getName());
@@ -54,6 +60,28 @@ class TableBuilderTest extends TestCase
         self::assertStringContainsString(
             Column\ForeignKeyColumn::RELATED_TEXT . ' ' . $otherName,
             $column->getDescription()
+        );
+        self::assertStringContainsString('ON DELETE ' . $action, $column->toMySQLForeignKey());
+        self::assertInstanceOf(SecondaryIndex::class, $table->getIndexes()[$name]);
+    }
+
+    public function testAddForeignKeyColumnNullable(): void
+    {
+        $table  = (new TableBuilder(self::NAME, self::DESCRIPTION))
+            ->addForeignKeyColumnNullable($otherName = 'other_table', self::COLUMN_DESCRIPTION)
+            ->build();
+        $column = $table->getColumn($name = $otherName . '_id');
+        self::assertInstanceOf(Column\ForeignKeyColumn::class, $column);
+        self::assertEquals($otherName, $column->getOtherTable());
+        self::assertEquals($name, $column->getName());
+        self::assertStringContainsString(self::COLUMN_DESCRIPTION, $column->getDescription());
+        self::assertStringContainsString(
+            Column\ForeignKeyColumn::RELATED_TEXT . ' ' . $otherName,
+            $column->getDescription()
+        );
+        self::assertStringContainsString(
+            'ON DELETE ' . ForeignKeyColumn::ACTION_SET_NULL,
+            $column->toMySQLForeignKey()
         );
         self::assertInstanceOf(SecondaryIndex::class, $table->getIndexes()[$name]);
     }

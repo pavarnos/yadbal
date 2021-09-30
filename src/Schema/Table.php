@@ -70,7 +70,7 @@ class Table
 
     public function getColumn(string $name): Column
     {
-        assert(isset($this->column[$name]));
+        assert(isset($this->column[$name]), $name);
         return $this->column[$name];
     }
 
@@ -121,9 +121,9 @@ class Table
         foreach ($this->column as $column) {
             $items[] = $column->toSQLite();
         }
-//        foreach ($this->index as $index) {
-//            $items[] = $index->toSQLite();
-//        }
+        foreach ($this->index as $index) {
+            $items[] = $index->toSQLite();
+        }
         $space = '    ';
         return 'create table ' . $this->name . ' (' . PHP_EOL .
             $space . join(',' . PHP_EOL . $space, array_filter($items)) . PHP_EOL . ')';
