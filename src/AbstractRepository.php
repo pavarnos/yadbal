@@ -15,6 +15,8 @@ use Latitude\QueryBuilder\Query\DeleteQuery;
 use Latitude\QueryBuilder\Query\InsertQuery;
 use Latitude\QueryBuilder\Query\SelectQuery;
 use Latitude\QueryBuilder\Query\UpdateQuery;
+use LSS\YADbal\Paginator\AbstractPaginator;
+use LSS\YADbal\Paginator\LatitudePaginator;
 use LSS\YADbal\Schema\GetSchemaInterface;
 
 use function Latitude\QueryBuilder\field;
@@ -118,24 +120,24 @@ abstract class AbstractRepository implements GetSchemaInterface
         return $this->select(...$columns)->from(static::TABLE_NAME);
     }
 
-//    public function getShowAllPaginator(SelectQuery $select): AbstractPaginator
-//    {
-//        return LatitudePaginator::forShowAll($this->fetchAll($select));
-//    }
-//
-//    public function getFastPaginator(SelectQuery $select, int $pageNumber, int $pageSize): AbstractPaginator
-//    {
-//        $rows = $this->fetchAll(LatitudePaginator::getPageSelect($select, $pageNumber, $pageSize));
-//        return LatitudePaginator::forFastMode($rows, $pageNumber, $pageSize);
-//    }
-//
-//    public function getPaginator(SelectQuery $select, int $pageNumber, int $pageSize): AbstractPaginator
-//    {
-//        $itemCount = $this->fetchInt(LatitudePaginator::getCountSelect($select, $this));
-//        $rows      = $this->fetchAll(LatitudePaginator::getPageSelect($select, $pageNumber, $pageSize));
-//        return LatitudePaginator::forPage($rows, $pageNumber, $pageSize, $itemCount);
-//    }
-//
+    public function getShowAllPaginator(SelectQuery $select): AbstractPaginator
+    {
+        return LatitudePaginator::forShowAll($this->fetchAll($select));
+    }
+
+    public function getFastPaginator(SelectQuery $select, int $pageNumber, int $pageSize): AbstractPaginator
+    {
+        $rows = $this->fetchAll(LatitudePaginator::getPageSelect($select, $pageNumber, $pageSize));
+        return LatitudePaginator::forFastMode($rows, $pageNumber, $pageSize);
+    }
+
+    public function getPaginator(SelectQuery $select, int $pageNumber, int $pageSize): AbstractPaginator
+    {
+        $itemCount = $this->fetchInt(LatitudePaginator::getCountSelect($select, $this));
+        $rows      = $this->fetchAll(LatitudePaginator::getPageSelect($select, $pageNumber, $pageSize));
+        return LatitudePaginator::forPage($rows, $pageNumber, $pageSize, $itemCount);
+    }
+
 
     // it would be nice to make all fetch*() methods protected, but they are needed for DisplayOrder and pagination.
     // the gymnastics involved in hiding them was not worth it
