@@ -2,20 +2,20 @@
 
 A simple wrapper around PDO that provides
 
-- utility functions to make database queries easier with less boilerplate 
+- utility functions to make database queries easier with less boilerplate
 - tools to declare your database schema in code and sync those with the server
 - utilities to make common fields like display order, date created / updated, json easier to work with
 - a lightweight paginator
 - fakes and stubs to ease tests so they don't have to talk to a physical database
 
-It is currently MySQL only, with some support for SQLite to help with unit tests. Pull requests welcome to extend
-this to other DBMS.
+It is currently MySQL only, with some support for SQLite to help with unit tests. Pull requests welcome to extend this
+to other DBMS.
 
 ## Why another one?
 
 This is based on an ancient library i wrote in 2007 to allow a database schema definition all in PHP and (at the click
 of a button) generate alter table statements to synch the mysql server with the PHP. This was handy for a number of
-sites that had a very limited number of users. It allowed
+sites that had a single install location or a very limited number of users. It allowed
 
 - a build process to update the schema on demand.
 - custom reports to introspect the schema and generate a reasonably rich description of the tables and fields. Users
@@ -29,21 +29,27 @@ sites that had a very limited number of users. It allowed
   model changes. (This is done in a pre-release build step). You can use foreign key constraints in most cases, but not
   all
 
-Yeah, there is better ways to do this now with full ORMs and other goodness. But this is 
+Yeah, there are better ways to do this now with full ORMs and other goodness. But this is
 
 - battle tested over many years
-- is as lightweight as possible
+- as lightweight as possible internally
 - tries hard to minimise the amount of boilerplate code needed to use it
-- has high test coverage 
+- has high test coverage
 - phpstan --level=max
 - PHP8.0 with strict types
 
 And I still use it in a few places and for new greenfield projects.
 
-## Repository per table
+lss/yadbal replaces [lss/schema](https://github.com/pavarnos/schema) which only did the schema stuff. This improves on
+it by supporting MySQL 8 and PHP8, adding Repository classes and Database Connections, adding Paginators
 
-Easiest way to use this is to declare one class per table in your database, and add utility functions to isolate your
-code from queries in the database.
+## Installation
+
+```
+composer require lss/yadbal
+```
+
+## Repository per table
 
 Use the `TableBuilder` convenience methods to declare your schema, or just create new columns and add them to
 the `Schema` as needed.
@@ -156,12 +162,36 @@ if you know the parent id too. eg
 
 - `findChildOrNull($id, $parentId)`
 - `findChildOrException($id, $parentId)`
-- on new row, `save()` throws an exception if parent id is not set 
-- on save existing row, `save()` will only update if the id matches the parent id  
+- on new row, `save()` throws an exception if parent id is not set
+- on save existing row, `save()` will only update if the id matches the parent id
 
 ```php
     $job = $jobRepository->findChildOrException($jobId, $companyId);
 ```
+
+Declare one class per table in your database. Put them all in the same directory in a directory structure that mirrors
+the table structure. eg if your database structure is
+
+- `company`
+- `company_employee`
+- `company_job`
+- `user`
+- `user_mentor`
+
+Then your filesystem might look like
+
+- `Repository/CompanyRepository.php`  : extends AbstractRepository
+- `Repository/Company/EmployeeRepository.php` : extends AbstractChildRepository
+- `Repository/Company/JobRepository.php` : extends AbstractChildRepository
+- `Repository/UserRepository.php` : extends AbstractRepository
+- `Repository/User/MentorRepository.php` : extends AbstractChildRepository
+
+Add utility functions to isolate your code from queries in the database: ideally you will not have any SelectQuery
+instances in your own code. They are there if you need them, but try to move all query building code to methods on your
+Repository classes. Call those methods to get the data you need. This encapsulation will create a nice layer between
+your business logic and your database logic. It also makes the Repositories much easier to mock when writing tests. You
+can mock `$companyRepository->getVisibleCompanies()` and return the desired array instead of having to mess around
+rebuilding your SQL queries in your tests.
 
 ## Schema Syncing
 
@@ -236,7 +266,7 @@ class DatabaseUpgradeCommand
 }
 ```
 
-I usually create a symfony console command that dumps the upgrade statements unless a --apply option is passed.
+I usually create a symfony console command that dumps the upgrade statements unless a `--apply` option is passed.
 
 ### known limitations
 
@@ -249,9 +279,12 @@ I usually create a symfony console command that dumps the upgrade statements unl
 
 ## Test Utilities
 
-Use a `FakeDatabaseConnection` to check that expected SQL queries and parameters are passed through to the database.
-This can still allow room for bugs because it does not check that your declared schema matches the queries.
+Use a `FakeDatabaseConnection` to check that expected SQL queries and parameters are passed through to the lowest
+database layer without actually touching a real database. They are good for unit tests, but can still allow room for
+bugs because it does not check that your declared schema matches the queries. So you still want to do end to end tests.
 
-Use a `MemoryDatabaseConnection`. Build the tables first with `$repository->getSchema()->toSQLite()` then populate with
-fake data to allow true end-to-end tests. See `DisplayOrderTest` for an example.
+Use a `MemoryDatabaseConnection` for end to end tests. Build the tables first
+with `$repository->getSchema()->toSQLite()` then populate with fake data to allow true end-to-end tests.
+See `DisplayOrderTest` for an example. You may have trouble with calculated columns... pull request welcome if you know
+of a fix for that?
 
