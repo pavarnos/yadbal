@@ -40,14 +40,15 @@ Yeah, there are better ways to do this now with full ORMs and other goodness. Bu
 
 And I still use it in a few places and for new greenfield projects.
 
-lss/yadbal replaces [lss/schema](https://github.com/pavarnos/schema) which only did the schema stuff. This improves on
-it by supporting MySQL 8 and PHP8, adding Repository classes and Database Connections, adding Paginators
-
 ## Installation
 
 ```
 composer require lss/yadbal
 ```
+
+`lss/yadbal` replaces [lss/schema](https://github.com/pavarnos/schema) which only did the schema stuff. This improves on
+it by supporting MySQL 8 and PHP8, adding Repository classes and Database Connections, adding Paginators, and providing
+core services for `lss/yareport`: a low effort reporting writing tool.
 
 ## Repository per table
 

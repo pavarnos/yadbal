@@ -9,6 +9,11 @@ declare(strict_types=1);
 
 namespace LSS\YADbal\Repository;
 
+/**
+ * for MySQL json columns
+ * If the field value is array on save, json_encodes automatically
+ * On find, converts from json to array
+ */
 trait JsonColumnTrait
 {
     /** @var string[]: set this in the constructor */

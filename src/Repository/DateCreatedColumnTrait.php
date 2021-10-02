@@ -11,6 +11,10 @@ namespace LSS\YADbal\Repository;
 
 use Latitude\QueryBuilder\ExpressionInterface;
 
+/**
+ * Use this in association with TableBuilder->addDateCreatedColumn()
+ * to automatically set date updated on first save of a new row
+ */
 trait DateCreatedColumnTrait
 {
     protected function beforeSaveDateCreated(array $data): array

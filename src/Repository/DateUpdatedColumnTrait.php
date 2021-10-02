@@ -11,6 +11,10 @@ namespace LSS\YADbal\Repository;
 
 use Latitude\QueryBuilder\ExpressionInterface;
 
+/**
+ * Use this in association with TableBuilder->addDateUpdatedColumn()
+ * to automatically set date updated on each save
+ */
 trait DateUpdatedColumnTrait
 {
     protected function beforeSaveDateUpdated(array $data): array
