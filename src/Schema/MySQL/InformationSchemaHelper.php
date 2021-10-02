@@ -13,7 +13,7 @@ use LSS\YADbal\DatabaseConnectionInterface;
 
 /**
  * an internal helper class that wraps database access.
- * It does only three queries to the database and breaks things down per table and index so we do not have to make two
+ * It does only a few queries to the database and breaks things down per table and index so we do not have to make two
  * queries per table: avoids the N+1 problem times two for a big schema with lots of tables.
  */
 class InformationSchemaHelper
@@ -107,16 +107,14 @@ class InformationSchemaHelper
         // deliberate limitation here: a foreign key constraint can only go from a single column to the id column of its parent table
         // this keeps things very simple and is all that is needed by this schema library
 
+        $referencedColumns = $this->getReferencedColumn($databaseName);
+
         // https://dev.mysql.com/doc/refman/8.0/en/information-schema-referential-constraints-table.html
-        $sql = 'SELECT * FROM information_schema.referential_constraints WHERE constraint_schema = :schema';
-        foreach ($this->database->fetchAll($sql, ['schema' => $databaseName]) as $constraint) {
+        $sql = 'select * from information_schema.referential_constraints WHERE constraint_schema = :schema';
+        foreach ($data = $this->database->fetchAll($sql, ['schema' => $databaseName]) as $constraint) {
             $constraint = array_change_key_case($constraint, CASE_LOWER);
 
-            $column = $this->getReferencedColumn(
-                $databaseName,
-                $constraint['constraint_name'],
-                $constraint['table_name']
-            );
+            $column = $referencedColumns[$constraint['constraint_name']][$constraint['table_name']];
             assert($column['referenced_column_name'] === 'id');
 
             $this->foreignKey[$constraint['table_name']][$column['column_name']] = [
@@ -129,13 +127,16 @@ class InformationSchemaHelper
         }
     }
 
-    private function getReferencedColumn(string $databaseName, string $constraintName, string $tableName): array
+    private function getReferencedColumn(string $databaseName): array
     {
         // https://dev.mysql.com/doc/refman/8.0/en/information-schema-key-column-usage-table.html
-        $sql        = 'SELECT * FROM information_schema.key_column_usage WHERE table_schema = :schema and constraint_name = :constraint and table_name = :tableName';
-        $parameters = ['schema' => $databaseName, 'constraint' => $constraintName, 'tableName' => $tableName];
-        $columnInfo = $this->database->fetchRow($sql, $parameters);
-        $columnInfo = array_change_key_case($columnInfo, CASE_LOWER);
-        return $columnInfo;
+        $sql    = 'select * from information_schema.key_column_usage WHERE table_schema = :schema';
+        $result = [];
+        foreach ($data = $this->database->fetchAll($sql, ['schema' => $databaseName]) as $column) {
+            $column = array_change_key_case($column, CASE_LOWER);
+
+            $result[$column['constraint_name']][$column['table_name']] = $column;
+        };
+        return $result;
     }
 }

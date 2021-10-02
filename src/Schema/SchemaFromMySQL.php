@@ -84,65 +84,46 @@ class SchemaFromMySQL
                 $key['constraint_name']
             );
         }
-        switch ($info['data_type']) {
-            case 'mediumtext':
-            case 'text':
-                // also covers json, markdown types
-                $column = new Column\TextColumn($info['column_name'], $info['column_comment'], $info['data_type']);
-                break;
-            case 'varchar':
-                $column = new Column\StringColumn(
-                    $info['column_name'], $info['column_comment'],
-                    $info['column_default'], intval($info['character_maximum_length'])
-                );
-                break;
-            case 'int':
-            case 'mediumint':
-                // also covers foreign key types
-                $column = new Column\IntegerColumn(
-                    $info['column_name'], $info['column_comment'],
-                    $info['column_default'] ?? '0', $info['column_type']
-                );
-                break;
-            case 'tinyint':
-                $column = new Column\BooleanColumn($info['column_name'], $info['column_comment']);
-                break;
-            case 'decimal':
-                $column = new Column\FloatColumn(
-                    $info['column_name'], $info['column_comment'],
-                    intval($info['numeric_precision']), intval($info['numeric_scale'])
-                );
-                break;
-            case 'date':
-                $column = new Column\DateColumn($info['column_name'], $info['column_comment'], $info['column_default']);
-                break;
-            case 'datetime':
-                $column = new Column\DateTimeColumn(
-                    $info['column_name'], $info['column_comment'],
-                    $info['column_default']
-                );
-                break;
-            case 'enum':
-                $column = new Column\EnumerationColumn(
-                    $info['column_name'], $info['column_comment'],
-                    $this->getValues($info['column_type']), $info['column_default']
-                );
-                break;
-            case 'set':
-                $column = new Column\SetColumn(
-                    $info['column_name'], $info['column_comment'],
-                    $this->getValues($info['column_type'])
-                );
-                break;
-            case 'json':
-                $column = new Column\JsonColumn($info['column_name'], $info['column_comment']);
-                break;
-            default:
-                throw new SchemaException(
-                    'Unknown column type ' .
-                    join(' ', [$info['table_name'], $info['column_name'], $info['data_type']])
-                );
-        }
+        $column = match ($info['data_type']) {
+            'mediumtext', 'text' => new Column\TextColumn(
+                $info['column_name'],
+                $info['column_comment'],
+                $info['data_type']
+            ),
+            'varchar' => new Column\StringColumn(
+                $info['column_name'], $info['column_comment'],
+                $info['column_default'], intval($info['character_maximum_length'])
+            ),
+            'int', 'mediumint' => new Column\IntegerColumn(
+                $info['column_name'], $info['column_comment'],
+                $info['column_default'] ?? '0', $info['column_type']
+            ),
+            'tinyint' => new Column\BooleanColumn($info['column_name'], $info['column_comment']),
+            'decimal' => new Column\FloatColumn(
+                $info['column_name'], $info['column_comment'],
+                intval($info['numeric_precision']), intval($info['numeric_scale'])
+            ),
+            'date' => new Column\DateColumn($info['column_name'], $info['column_comment'], $info['column_default']),
+            'datetime' => new Column\DateTimeColumn(
+                $info['column_name'], $info['column_comment'],
+                $info['column_default']
+            ),
+            'enum' => new Column\EnumerationColumn(
+                $info['column_name'], $info['column_comment'],
+                $this->getValues($info['column_type']), $info['column_default']
+            ),
+            'set' => new Column\SetColumn(
+                $info['column_name'], $info['column_comment'],
+                $this->getValues($info['column_type'])
+            ),
+            'json' => new Column\JsonColumn($info['column_name'], $info['column_comment']),
+            // @codeCoverageIgnoreStart
+            default => throw new SchemaException(
+                'Unknown column type ' .
+                join(' ', [$info['table_name'], $info['column_name'], $info['data_type']])
+            ),
+            // @codeCoverageIgnoreEnd
+        };
         if (!empty($info['generation_expression'])) {
             $column = new Column\CalculatedColumn($column, $this->stripIntroducers($info['generation_expression']));
         }
@@ -155,9 +136,11 @@ class SchemaFromMySQL
     protected function getValues(string $text): array
     {
         if (\Safe\preg_match('/^(set|enum)\((.*)\)$/', $text, $matches) == 0) {
+            // @codeCoverageIgnoreStart
             throw new SchemaException('Could not match set or enum ' . $text);
+            // @codeCoverageIgnoreEnd
         }
-        return (array) \Safe\preg_replace('/^([\'"])(.*)([\'"])$/', '\2', explode(',', $matches[2]));
+        return (array)\Safe\preg_replace('/^([\'"])(.*)([\'"])$/', '\2', explode(',', $matches[2]));
     }
 
     protected function indexFromInfo(array $columns): Index

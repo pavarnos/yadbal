@@ -1,0 +1,100 @@
+[
+    {
+        "TABLE_NAME": "company",
+        "INDEX_NAME": "capsule_id",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "capsule_id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "company",
+        "INDEX_NAME": "PRIMARY",
+        "NON_UNIQUE": "0",
+        "COLUMN_NAME": "id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "company_job",
+        "INDEX_NAME": "company_id",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "company_id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "company_job",
+        "INDEX_NAME": "date_expires",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "date_expires",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "company_job",
+        "INDEX_NAME": "PRIMARY",
+        "NON_UNIQUE": "0",
+        "COLUMN_NAME": "id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "company_tag",
+        "INDEX_NAME": "company_id",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "company_id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user",
+        "INDEX_NAME": "company_id",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "company_id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user",
+        "INDEX_NAME": "email_address",
+        "NON_UNIQUE": "0",
+        "COLUMN_NAME": "email_address",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user",
+        "INDEX_NAME": "PRIMARY",
+        "NON_UNIQUE": "0",
+        "COLUMN_NAME": "id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user_mentor",
+        "INDEX_NAME": "date_started",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "date_started",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user_mentor",
+        "INDEX_NAME": "date_started",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "date_finished",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user_mentor",
+        "INDEX_NAME": "mentor_id",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "mentor_id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user_mentor",
+        "INDEX_NAME": "PRIMARY",
+        "NON_UNIQUE": "0",
+        "COLUMN_NAME": "id",
+        "INDEX_TYPE": "BTREE"
+    },
+    {
+        "TABLE_NAME": "user_mentor",
+        "INDEX_NAME": "user_id",
+        "NON_UNIQUE": "1",
+        "COLUMN_NAME": "user_id",
+        "INDEX_TYPE": "BTREE"
+    }
+]

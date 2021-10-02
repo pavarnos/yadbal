@@ -1,0 +1,18 @@
+[
+    {
+        "TABLE_NAME": "company",
+        "TABLE_COMMENT": "Company profile"
+    },
+    {
+        "TABLE_NAME": "company_job",
+        "TABLE_COMMENT": "Job opportunity for company"
+    },
+    {
+        "TABLE_NAME": "user",
+        "TABLE_COMMENT": "Someone who can log in"
+    },
+    {
+        "TABLE_NAME": "user_mentor",
+        "TABLE_COMMENT": "A tag for a user"
+    }
+]

@@ -20,8 +20,6 @@ class ChildRepositoryTest extends TestCase
 {
     private ChildRepository $table;
 
-    private Carbon $now;
-
     private array $row = [
         1 => ['example_id' => 10, 'value' => 'ab'],
         2 => ['example_id' => 10, 'value' => 'cd'],
@@ -86,7 +84,7 @@ class ChildRepositoryTest extends TestCase
     public function testSaveNewValid(): void
     {
         $id     = $this->table->save($expected = ['example_id' => $parentId = 44, 'value' => 'xx']);
-        $actual = $this->table->findChildOrNull($id, $parentId);
+        $actual = $this->table->findChildOrNull($id, $parentId) ?? [];
         self::assertEquals($id, $actual['id']);
         self::assertEquals($expected['example_id'], $actual['example_id']);
         self::assertEquals($expected['value'], $actual['value']);
@@ -105,7 +103,7 @@ class ChildRepositoryTest extends TestCase
             ['id' => 1, 'example_id' => $parentId = $this->row[1]['example_id'], 'value' => $value = 'xx']
         );
         self::assertEquals(1, $id);
-        $actual = $this->table->findChildOrNull($id, $parentId);
+        $actual = $this->table->findChildOrNull($id, $parentId) ?? [];
         self::assertEquals($value, $actual['value']);
         self::assertEquals($parentId, $actual['example_id']);
     }
@@ -120,7 +118,7 @@ class ChildRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow($this->now = Carbon::now());
+        Carbon::setTestNow(Carbon::now());
         $database    = new MemoryDatabaseConnection();
         $this->table = new ChildRepository($database);
         $toSQLite    = $this->table->getSchema()->toSQLite();
