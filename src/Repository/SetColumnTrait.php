@@ -37,10 +37,12 @@ trait SetColumnTrait
     {
         assert(!empty($this->setColumns), 'set setColumns in the constructor');
         foreach ($this->setColumns as $column) {
-            if (is_null($data[$column])) {
-                $data[$column] = [];
-            } elseif (!empty($data[$column])) {
-                $data[$column] = explode(',', $data[$column]);
+            if (isset($data[$column])) {
+                if (is_null($data[$column])) {
+                    $data[$column] = [];
+                } elseif (!empty($data[$column])) {
+                    $data[$column] = explode(',', $data[$column]);
+                }
             }
         }
         return $data;
