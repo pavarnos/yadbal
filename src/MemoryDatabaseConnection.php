@@ -14,7 +14,6 @@ use Latitude\QueryBuilder\ExpressionInterface;
 use LSS\YADbal\DatabaseConnection\PDOConnection;
 
 use function Latitude\QueryBuilder\express;
-use function Latitude\QueryBuilder\literal;
 
 class MemoryDatabaseConnection extends DatabaseConnection
 {
