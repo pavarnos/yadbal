@@ -1,6 +1,6 @@
 {
     "name": "lss/yadbal",
-    "description": "Lightweight Database Abstraction Layer",
+    "description": "Yet Another Database Abstraction Layer",
     "keywords": [
         "dbal",
         "mysql",
