@@ -32,6 +32,6 @@ class SetColumn extends Column
 
     public function toSQLite(): string
     {
-        return $this->name . ' text default ""';
+        return $this->name . ' text default null';
     }
 }

@@ -93,7 +93,7 @@ class ColumnTest extends TestCase
     public function testSQLiteGeneration(): void
     {
         self::assertEquals('foo text default "bar"', (new EnumerationColumn('foo', '', ['bar', 'baz']))->toSQLite());
-        self::assertEquals('foo text default ""', (new SetColumn('foo', '', ['bar', 'baz']))->toSQLite());
+        self::assertEquals('foo text default null', (new SetColumn('foo', '', ['bar', 'baz']))->toSQLite());
         self::assertEquals('foo varchar(20) not null default ""', (new StringColumn('foo', '', '', 20))->toSQLite());
         self::assertEquals('foo float not null default 0', (new FloatColumn('foo', ''))->toSQLite());
         self::assertEquals('foo integer not null default 0', (new IntegerColumn('foo', ''))->toSQLite());

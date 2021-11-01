@@ -18,7 +18,7 @@ use function Latitude\QueryBuilder\field;
 
 class ExampleRepository extends AbstractRepository
 {
-    use DateCreatedColumnTrait, DateUpdatedColumnTrait, JsonColumnTrait;
+    use DateCreatedColumnTrait, DateUpdatedColumnTrait, JsonColumnTrait, CSVColumnTrait, SetColumnTrait;
 
     public const TABLE_NAME = 'example';
 
@@ -26,6 +26,8 @@ class ExampleRepository extends AbstractRepository
     {
         parent::__construct($database);
         $this->jsonColumns[] = 'value_json';
+        $this->csvColumns[] = 'value_csv';
+        $this->setColumns[] = 'value_set';
     }
 
     public function getSchema(): Table
@@ -34,6 +36,8 @@ class ExampleRepository extends AbstractRepository
             ->addPrimaryKeyColumn()
             ->addStringColumn('value', 2)
             ->addIntegerColumn('value_int')
+            ->addStringColumn('value_csv', 100)
+            ->addSetColumn('value_set', ['a','b','c'])
             ->addJsonColumn('value_json')
             ->addDateUpdatedColumn()
             ->addDateCreatedColumn()

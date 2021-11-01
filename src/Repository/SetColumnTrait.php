@@ -22,7 +22,7 @@ trait SetColumnTrait
     protected function beforeSaveSetColumn(array $data): array
     {
         foreach ($this->setColumns as $column) {
-            if (isset($data[$column])) {
+            if (array_key_exists($column, $data)) {
                 if (empty($data[$column])) {
                     $data[$column] = null;
                 } elseif (is_array($data[$column])) {
@@ -37,7 +37,7 @@ trait SetColumnTrait
     {
         assert(!empty($this->setColumns), 'set setColumns in the constructor');
         foreach ($this->setColumns as $column) {
-            if (isset($data[$column])) {
+            if (array_key_exists($column, $data)) {
                 if (is_null($data[$column])) {
                     $data[$column] = [];
                 } elseif (!empty($data[$column])) {

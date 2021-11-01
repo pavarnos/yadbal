@@ -15,7 +15,6 @@ use LSS\YADbal\MemoryDatabaseConnection;
 use PHPUnit\Framework\TestCase;
 
 use function Latitude\QueryBuilder\field;
-use function PHPUnit\Framework\assertEquals;
 
 /**
  * to test all of AbstractRepository
@@ -27,8 +26,20 @@ class ExampleRepositoryTest extends TestCase
     private Carbon $now;
 
     private array $row = [
-        1 => ['value' => 'ab', 'value_int' => 33, 'value_json' => ['one' => 11, 'two' => 22]],
-        2 => ['value' => 'cd', 'value_int' => 44, 'value_json' => null],
+        1 => [
+            'value'      => 'ab',
+            'value_int'  => 33,
+            'value_csv'  => [],
+            'value_json' => ['one' => 11, 'two' => 22],
+            'value_set'  => [],
+        ],
+        2 => [
+            'value'      => 'cd',
+            'value_int'  => 44,
+            'value_csv'  => ['one', 'two', 'one'],
+            'value_json' => null,
+            'value_set'  => ['a', 'c'],
+        ],
     ];
 
     public function testSimpleGetters(): void
@@ -42,11 +53,25 @@ class ExampleRepositoryTest extends TestCase
         $this->assertValidRow(1, $this->table->findOrNull(1) ?? []);
     }
 
-    public function testFindOrNullPartialColumns(): void
+    /**
+     * @param int $id
+     * @dataProvider getRowIds
+     */
+    public function testFindOrNullPartialColumns(int $id): void
     {
-        $row = $this->table->findOrNull($id = 1, ['id', 'value_json']) ?? [];
+        $row = $this->table->findOrNull($id, ['id', 'value_json', 'value_csv', 'value_set']) ?? [];
         self::assertEquals((string)$id, $row['id']);
         self::assertEquals($this->row[$id]['value_json'], $row['value_json']);
+        self::assertEquals($this->row[$id]['value_csv'], $row['value_csv']);
+        self::assertEquals($this->row[$id]['value_set'], $row['value_set']);
+    }
+
+    public function getRowIds(): array
+    {
+        return [
+            1 => [1],
+            2 => [2],
+        ];
     }
 
     public function testFindOrExceptionExists(): void
@@ -131,17 +156,25 @@ class ExampleRepositoryTest extends TestCase
         parent::tearDown();
     }
 
-    protected function assertValidRow(int $id, ?array $row, bool $decodeJson = false): void
+    protected function assertValidRow(int $id, ?array $row, bool $decode = false): void
     {
         self::assertNotNull($row);
         $json = $row['value_json'];
-        if ($decodeJson && !is_null($json)) {
-            $json = \Safe\json_decode($row['value_json'], true);
+        $csv  = $row['value_csv'];
+        $set  = $row['value_set'];
+        if ($decode) {
+            if (!is_null($json)) {
+                $json = \Safe\json_decode($json, true);
+            }
+            $csv = array_filter(explode(',', $csv));
+            $set = array_filter(explode(',', $set ?? ''));
         }
         self::assertEquals((string)$id, $row['id']);
         self::assertEquals($this->row[$id]['value'], $row['value']);
         self::assertEquals($this->row[$id]['value_int'], $row['value_int']);
         self::assertEquals($this->row[$id]['value_json'], $json);
+        self::assertEquals($this->row[$id]['value_csv'], $csv);
+        self::assertEquals($this->row[$id]['value_set'], $set);
         self::assertEquals($row['date_created'], $this->now->toDateTimeString());
         self::assertEquals($row['date_updated'], $this->now->toDateTimeString());
     }
