@@ -103,8 +103,8 @@ abstract class AbstractChildRepository extends AbstractRepository
 
     protected function beforeSave(array $data): array
     {
-        if (!isset($data[$this->parentIdField])) {
-            throw new DatabaseException('missing ' . $this->parentIdField . ' in ' . static::TABLE_NAME);
+        if (!array_key_exists($this->parentIdField, $data)) {
+            throw new DatabaseException('Missing ' . $this->parentIdField . ' in ' . static::TABLE_NAME);
         }
         return parent::beforeSave($data);
     }

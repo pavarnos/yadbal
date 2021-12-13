@@ -93,7 +93,7 @@ class ChildRepositoryTest extends TestCase
     public function testSaveNewInValid(): void
     {
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessageMatches('|missing example_id|');
+        $this->expectExceptionMessageMatches('|Missing example_id|');
         $id = $this->table->save(['value' => 'xx']); // example_id is missing
     }
 
@@ -111,7 +111,7 @@ class ChildRepositoryTest extends TestCase
     public function testSaveExistingInValid(): void
     {
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessageMatches('|missing example_id|');
+        $this->expectExceptionMessageMatches('|Missing example_id|');
         $id = $this->table->save(['id' => 1, 'value' => 'xx']); // example_id is missing
     }
 
