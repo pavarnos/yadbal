@@ -137,6 +137,6 @@ class SchemaFromMySQLTest extends TestCase
 
     private function getFixture(string $file): array
     {
-        return \Safe\json_decode(file_get_contents($file) ?: '', true);
+        return (array) \Safe\json_decode(file_get_contents($file) ?: '', true);
     }
 }

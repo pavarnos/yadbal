@@ -44,7 +44,8 @@ class DatabaseConnection implements DatabaseConnectionInterface
 
     public function fetchRow(string $sql, array $parameters = []): array
     {
-        return $this->read->perform($sql, $parameters)->fetch(\PDO::FETCH_ASSOC) ?: [];
+        $result = $this->read->perform($sql, $parameters)->fetch(\PDO::FETCH_ASSOC);
+        return $result === false ? [] : (array) $result;
     }
 
     public function fetchCol(string $sql, array $parameters = []): array
