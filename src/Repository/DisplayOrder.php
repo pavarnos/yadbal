@@ -103,7 +103,7 @@ class DisplayOrder
         $this->saveRow($next, $order[$id], $fixed);
     }
 
-    private function saveRow(int $id, string $order, array $fixed): void
+    private function saveRow(int $id, string|int $order, array $fixed): void
     {
         $this->repository->save(['id' => $id, self::DISPLAY_ORDER_FIELD => $order] + $fixed);
     }
